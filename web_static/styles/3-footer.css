@@ -1,0 +1,13 @@
+footer {
+	position: fixed;
+	background: #FFFFFF;
+	height: 60px;
+	width: 100%;
+	bottom: 0;
+	border-top: 1px solid #CCCCCC;
+}
+footer p {
+	position: relative;
+	text-align: center;
+	top: 10%;
+}
