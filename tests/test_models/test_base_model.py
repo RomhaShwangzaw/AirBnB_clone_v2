@@ -1,100 +1,131 @@
 #!/usr/bin/python3
-""" Unittest module for the base_model class """
-from models.base_model import BaseModel
+"""Defines unnittests for models/base_model.py."""
+import os
+import pep8
 import unittest
 from datetime import datetime
-import time
+from models.base_model import BaseModel
+from models.engine.file_storage import FileStorage
 
 
-class BaseModelTest(unittest.TestCase):
-    """ Test Cases for the BaseModel class """
+class TestBaseModel(unittest.TestCase):
+    """Unittests for testing the BaseModel class."""
 
-    def testClassDocumentation(self):
-        """
-            Test to check for class documentation
-        """
-        self.assertGreater(len(BaseModel.__doc__), 0)
+    @classmethod
+    def setUpClass(cls):
+        """BaseModel testing setup.
 
-    def testConstructorDocumentation(self):
+        Temporarily renames any existing file.json.
+        Resets FileStorage objects dictionary.
+        Creates a BaseModel instance for testing.
         """
-            Test to check for constructor documentation
-        """
-        self.assertGreater(len(BaseModel.__init__.__doc__), 0)
+        try:
+            os.rename("file.json", "tmp")
+        except IOError:
+            pass
+        FileStorage._FileStorage__objects = {}
+        cls.storage = FileStorage()
+        cls.base = BaseModel()
 
-    def testStrDocumentation(self):
-        """
-            Test to check if __str__ function have documentation
-        """
-        self.assertGreater(len(BaseModel.__str__.__doc__), 0)
+    @classmethod
+    def tearDownClass(cls):
+        """BaseModel testing teardown.
 
-    def testSaveDocumentation(self):
+        Restore original file.json.
+        Delete the test BaseModel instance.
         """
-            Test to check if save function have documentation
-        """
-        self.assertGreater(len(BaseModel.save.__doc__), 0)
+        try:
+            os.remove("file.json")
+        except IOError:
+            pass
+        try:
+            os.rename("tmp", "file.json")
+        except IOError:
+            pass
+        del cls.storage
+        del cls.base
 
-    def testToDictDocumentation(self):
-        """
-            Test to check if to_dict function have documentation
-        """
-        self.assertGreater(len(BaseModel.to_dict.__doc__), 0)
+    def test_pep8(self):
+        """Test pep8 styling."""
+        style = pep8.StyleGuide(quiet=True)
+        p = style.check_files(["models/base_model.py"])
+        self.assertEqual(p.total_errors, 0, "fix pep8")
 
-    def testStr(self):
-        """
-            Test __str__ function
-        """
-        b1 = BaseModel()
-        b1.name = "Daniel"
-        b1.my_number = 11
-        b1.my_wrong_test = None
-        self.assertEqual(
-            b1.__str__(), "[{}] ({}) {}".format(
-                b1.__class__.__name__,
-                b1.id,
-                b1.__dict__
-            )
-        )
+    def test_docstrings(self):
+        """Check for docstrings."""
+        self.assertIsNotNone(BaseModel.__doc__)
+        self.assertIsNotNone(BaseModel.__init__.__doc__)
+        self.assertIsNotNone(BaseModel.save.__doc__)
+        self.assertIsNotNone(BaseModel.to_dict.__doc__)
+        self.assertIsNotNone(BaseModel.delete.__doc__)
+        self.assertIsNotNone(BaseModel.__str__.__doc__)
 
-    def testSave(self):
-        """
-            Test save function
-        """
-        import os
-        import json
-        from models import storage
+    def test_attributes(self):
+        """Check for attributes."""
+        self.assertEqual(str, type(self.base.id))
+        self.assertEqual(datetime, type(self.base.created_at))
+        self.assertEqual(datetime, type(self.base.updated_at))
 
-        b1 = BaseModel()
-        b1.name = "Daniel"
-        b1.my_number = 11
-        b1.my_wrong_test = None
-        b1.save()
-        self.assertGreater(b1.updated_at, b1.created_at)
-        self.assertDictEqual(
-            b1.to_dict(),
-            {
-                '__class__': 'BaseModel',
-                'created_at': b1.created_at.strftime("%Y-%m-%dT%H:%M:%S.%f"),
-                'id': b1.id,
-                'my_number': 11,
-                'my_wrong_test': None,
-                'name': "Daniel",
-                'updated_at': b1.updated_at.strftime("%Y-%m-%dT%H:%M:%S.%f")
-            }
-        )
+    def test_methods(self):
+        """Check for methods."""
+        self.assertTrue(hasattr(BaseModel, "__init__"))
+        self.assertTrue(hasattr(BaseModel, "save"))
+        self.assertTrue(hasattr(BaseModel, "to_dict"))
+        self.assertTrue(hasattr(BaseModel, "delete"))
+        self.assertTrue(hasattr(BaseModel, "__str__"))
 
-        tmpDict = {}
-        for key, value in storage.all().items():
-            tmpDict[key] = value.to_dict()
-        b1 = BaseModel()
-        key = "{}.{}".format("BaseModel", b1.id)
-        storage.new(b1)
-        b1.save()
-        tmpDict[key] = b1.to_dict()
-        inputStr = json.dumps(tmpDict)
-        self.assertTrue(os.path.exists("file.json"))
-        with open("file.json", "r") as file:
-            output = file.read()
-        self.assertEqual(json.loads(inputStr), json.loads(output))
+    def test_init(self):
+        """Test initialization."""
+        self.assertIsInstance(self.base, BaseModel)
+
+    def test_two_models_are_unique(self):
+        """Test that different BaseModel instances are unique."""
+        bm = BaseModel()
+        self.assertNotEqual(self.base.id, bm.id)
+        self.assertLess(self.base.created_at, bm.created_at)
+        self.assertLess(self.base.updated_at, bm.updated_at)
+
+    def test_init_args_kwargs(self):
+        """Test initialization with args and kwargs."""
+        dt = datetime.utcnow()
+        bm = BaseModel("1", id="5", created_at=dt.isoformat())
+        self.assertEqual(bm.id, "5")
+        self.assertEqual(bm.created_at, dt)
+
+    def test_str(self):
+        """Test __str__ representation."""
+        s = self.base.__str__()
+        self.assertIn("[BaseModel] ({})".format(self.base.id), s)
+        self.assertIn("'id': '{}'".format(self.base.id), s)
+        self.assertIn("'created_at': {}".format(repr(self.base.created_at)), s)
+        self.assertIn("'updated_at': {}".format(repr(self.base.updated_at)), s)
+
+    @unittest.skipIf(os.getenv("HBNB_ENV") is not None, "Testing DBStorage")
+    def test_save(self):
+        """Test save method."""
+        old = self.base.updated_at
+        self.base.save()
+        self.assertLess(old, self.base.updated_at)
+        with open("file.json", "r") as f:
+            self.assertIn("BaseModel.{}".format(self.base.id), f.read())
+
+    def test_to_dict(self):
+        """Test to_dict method."""
+        base_dict = self.base.to_dict()
+        self.assertEqual(dict, type(base_dict))
+        self.assertEqual(self.base.id, base_dict["id"])
+        self.assertEqual("BaseModel", base_dict["__class__"])
+        self.assertEqual(self.base.created_at.isoformat(),
+                         base_dict["created_at"])
+        self.assertEqual(self.base.updated_at.isoformat(),
+                         base_dict["updated_at"])
+        self.assertEqual(base_dict.get("_sa_instance_state", None), None)
+
+    @unittest.skipIf(os.getenv("HBNB_ENV") is not None, "Testing DBStorage")
+    def test_delete(self):
+        """Test delete method."""
+        self.base.delete()
+        self.assertNotIn(self.base, FileStorage._FileStorage__objects)
 
 
 if __name__ == "__main__":
