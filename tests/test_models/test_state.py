@@ -1,22 +1,22 @@
 #!/usr/bin/python3
-""" Test case for State class """
-import os
-from tests.test_models.test_base_model import TestBasemodel
+""" """
+from tests.test_models.test_base_model import test_basemodel
 from models.state import State
+import os
 
 
-class TestState(TestBasemodel):
-    """Represents the tests for the State model."""
+class test_state(test_basemodel):
+    """ states test class"""
+
     def __init__(self, *args, **kwargs):
-        """Initializes the test class."""
+        """ state test class init"""
         super().__init__(*args, **kwargs)
         self.name = "State"
         self.value = State
 
     def test_name3(self):
-        """Tests the type of name."""
+        """ testing state name attr"""
         new = self.value()
-        self.assertEqual(
-            type(new.name),
-            str if os.getenv('HBNB_TYPE_STORAGE') != 'db' else type(None)
-        )
+        self.assertEqual(type(new.name), str if
+                         os.getenv('HBNB_TYPE_STORAGE') != 'db' else
+                         type(None))
