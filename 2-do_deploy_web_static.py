@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 '''
 fabric script to distribute an archive to web servers
-----NEEDS TO REVISIT SCRIPT
 '''
 
 import os
@@ -10,6 +9,8 @@ from fabric.api import env, local, put, run, runs_once
 
 
 env.hosts = ['3.94.181.123', '52.206.106.241']
+env.user = "ubuntu"
+env.key_filename = '~/.ssh/id_rsa.pub'
 
 
 def do_deploy(archive_path):
