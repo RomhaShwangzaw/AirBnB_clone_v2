@@ -5,8 +5,10 @@ Routes:
     /hbnb: HBnB home page.
 """
 from models import storage
-from flask import Flask
-from flask import render_template
+from models.state import State
+from models.amenity import Amenity
+from models.place import Place
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
@@ -22,7 +24,7 @@ def hbnb():
 
 
 @app.teardown_appcontext
-def teardown(exc):
+def teardown(self):
     """Remove the current SQLAlchemy session."""
     storage.close()
 
